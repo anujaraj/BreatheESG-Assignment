@@ -171,17 +171,18 @@ class UploadCSVAPIView(GenericAPIView):
             return obj
 
         records = df.to_dict(orient="records")
-        raw_records = []
-        for row in records:
-            rr = RawRecord.objects.create(datasource=data_source, raw_data=sanitize_for_json(row))
-            raw_records.append((row, rr))
+        raw_record_objs = [
+            RawRecord(datasource=data_source, raw_data=sanitize_for_json(row))
+            for row in records
+        ]
+        raw_record_objs = RawRecord.objects.bulk_create(raw_record_objs)
+        raw_records = list(zip(records, raw_record_objs))
 
-        # mark parsed
         data_source.ingestion_status = DataSource.IngestionStatus.PARSED
         data_source.save(update_fields=["ingestion_status"])
 
         validation_summary = {"flagged": False, "severity": "none", "reasons": []}
-        row_reviews = []
+        flagged_raw_ids = {}
         for row, raw_record in raw_records:
             validation = validate_record(source_type, row)
             if validation["flagged"]:
@@ -189,44 +190,56 @@ class UploadCSVAPIView(GenericAPIView):
                 if validation_summary["severity"] != "error":
                     validation_summary["severity"] = validation["severity"]
                 validation_summary["reasons"].extend(validation["reasons"])
-                row_reviews.append((row, raw_record, validation))
+                flagged_raw_ids[raw_record.id] = validation
 
         data_source.ingestion_status = DataSource.IngestionStatus.VALIDATED
         data_source.save(update_fields=["ingestion_status"])
 
-        normalized_ids = []
+        normalized_objs = []
         for row, raw_record in raw_records:
             normalized_amount, normalized_unit, scope = normalize_record(source_type, row)
-            normalized = NormalizedRecord.objects.create(
+            normalized_objs.append(NormalizedRecord(
                 raw_record=raw_record,
                 scope=scope,
                 normalized_amount=normalized_amount,
                 normalized_unit=normalized_unit,
                 processing_status=NormalizedRecord.ProcessingStatus.COMPLETED,
-            )
-            normalized_ids.append(normalized.id)
-            AuditLog.objects.create(
+            ))
+        normalized_objs = NormalizedRecord.objects.bulk_create(normalized_objs)
+        normalized_ids = [n.id for n in normalized_objs]
+
+        audit_logs = []
+        reviews_to_create = []
+        for normalized in normalized_objs:
+            audit_logs.append(AuditLog(
                 record=normalized,
                 action="normalized",
                 new_values={
-                    "scope": scope,
-                    "normalized_amount": str(normalized_amount),
-                    "normalized_unit": normalized_unit,
+                    "scope": normalized.scope,
+                    "normalized_amount": str(normalized.normalized_amount),
+                    "normalized_unit": normalized.normalized_unit,
                 },
-            )
+            ))
+            if normalized.raw_record_id in flagged_raw_ids:
+                validation = flagged_raw_ids[normalized.raw_record_id]
+                reviews_to_create.append((normalized, validation))
 
-            # create review records for flagged rows
-            matching = [item for item in row_reviews if item[1].id == raw_record.id]
-            if matching:
-                _, _, validation = matching[0]
-                review = Review.objects.create(
+        AuditLog.objects.bulk_create(audit_logs)
+
+        if reviews_to_create:
+            review_objs = [
+                Review(
                     record=normalized,
                     flag_reason="; ".join(validation["reasons"]),
                     comments="",
                     approved=False,
                 )
-                AuditLog.objects.create(
-                    record=normalized,
+                for normalized, validation in reviews_to_create
+            ]
+            review_objs = Review.objects.bulk_create(review_objs)
+            review_audit_logs = [
+                AuditLog(
+                    record=review.record,
                     action="review_requested",
                     new_values={
                         "review_id": review.id,
@@ -234,6 +247,9 @@ class UploadCSVAPIView(GenericAPIView):
                         "approval_status": review.approval_status,
                     },
                 )
+                for review in review_objs
+            ]
+            AuditLog.objects.bulk_create(review_audit_logs)
 
         data_source.ingestion_status = DataSource.IngestionStatus.NORMALIZED
         data_source.save(update_fields=["ingestion_status"])
