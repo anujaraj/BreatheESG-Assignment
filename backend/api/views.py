@@ -291,7 +291,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().select_related(
+            'record__raw_record__datasource'
+        )
         status_filter = self.request.query_params.get("approval_status")
         if status_filter:
             qs = qs.filter(approval_status=status_filter)
