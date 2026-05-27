@@ -1,0 +1,6 @@
+Document_Number,Posting_Date,Plant_Code,Material_Description,Quantity,UOM,Supplier,Cost_Center,Currency,Amount
+450001245,12.03.2025,DE100,Diesel Fuel,500,L,Shell GmbH,CC100,EUR,850
+450001246,15/03/2025,IN200,Petrol,100,GAL,Indian Oil Corp,CC200,INR,32000
+450001247,17.03.2025,PL300,Diesel Fuel,-50,L,BP,CC300,EUR,-70
+450001248,2025-03-19,XX999,Diesel Fuel,250,XYZ,Unknown Supplier,CC400,USD,400
+450001249,21.03.2025,DE100,Biodiesel,700,L,Shell GmbH,CC100,EUR,1200

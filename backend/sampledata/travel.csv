@@ -1,0 +1,11 @@
+Trip_ID,Employee_ID,Trip_Type,Origin,Destination,Travel_Date,Class,Distance_km,Cost,Currency
+
+TR001,E100,Flight,BLR,LHR,2025-03-12,Economy,,65000,INR
+
+TR002,E101,Flight,DEL,SIN,12/03/2025,Business,4150,120000,INR
+
+TR003,E102,Hotel,London,London,2025-03-15,,3 nights,30000,INR
+
+TR004,E103,Taxi,Bangalore Airport,Whitefield,2025-03-18,,35,800,INR
+
+TR005,E104,Flight,BLR,,2025-03-20,Economy,9000,75000,INR
