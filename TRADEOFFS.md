@@ -24,7 +24,7 @@ This file explains the tradeoffs made during the project and the work that remai
 - Tradeoff: easier to build and test, but not secure enough for production use.
 
 ### 5. SQLite for persistence
-- The backend uses SQLite for simplicity.
+- The backend uses SQLite for simplicity. For persistent cloud deployments, PostgreSQL would be the proper production choice.
 - Tradeoff: fine for development and small demos, but not ideal for production scaling or concurrency.
 
 ### 6. Limited API testing
