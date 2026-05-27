@@ -52,10 +52,11 @@ class NormalizedRecordSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """
-    Serializer for Review objects. Includes organization name
+    Serializer for Review objects. Includes organization name and filename
     for better display in the frontend.
     """
     organization_name = serializers.SerializerMethodField()
+    filename = serializers.SerializerMethodField()
     
     class Meta:
         model = Review
@@ -65,6 +66,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         """Get organization name from the nested relationship chain."""
         try:
             return obj.record.raw_record.datasource.organization.company_name
+        except:
+            return None
+
+    def get_filename(self, obj):
+        """Get the upload filename for the review's original source."""
+        try:
+            return obj.record.raw_record.datasource.filename
         except:
             return None
 

@@ -104,6 +104,7 @@ export default function Review({ onAction }) {
               <tr>
                 <th>Review ID</th>
                 <th>Organization</th>
+                <th>Filename</th>
                 <th>Flag Reason</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -115,6 +116,9 @@ export default function Review({ onAction }) {
                   <td>{review.id}</td>
                   <td onClick={() => setExpandedId(expandedId === review.id ? null : review.id)}>
                     {review.organization_name || 'N/A'}
+                  </td>
+                  <td onClick={() => setExpandedId(expandedId === review.id ? null : review.id)}>
+                    {review.filename || 'N/A'}
                   </td>
                   <td style={{ fontSize: '0.9rem' }} onClick={() => setExpandedId(expandedId === review.id ? null : review.id)}>
                     {review.flag_reason}
