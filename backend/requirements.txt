@@ -4,3 +4,4 @@ django-cors-headers
 pandas
 psycopg2-binary
 python-dotenv
+gunicorn
